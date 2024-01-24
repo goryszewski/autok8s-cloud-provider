@@ -1,0 +1,1 @@
+{ "workers" : [{"name": "worker01", "ip": "10.17.3.212", "type": "kvm.cpu1.gb8"},{"name": "worker02", "ip": "10.17.3.125", "type": "kvm.cpu1.gb8"}] }

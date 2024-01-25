@@ -15,37 +15,34 @@ type instances struct {
 	client *http.Client
 }
 
-
 func newInstances(c *http.Client) cloudprovider.Instances {
 	return &instances{
 		client: c,
 	}
 }
 
-
 // NodeAddresses returns the addresses of the specified instance.
 func (i *instances) NodeAddresses(ctx context.Context, name types.NodeName) ([]v1.NodeAddress, error) {
 	klog.V(5).Infof("NodeAddresses(%v)", name)
-	node,_ :=ReturnJson(string(name))
+	node, _ := ReturnJson(string(name))
 	var addrs []v1.NodeAddress
-
 
 	nodeAddr := v1.NodeAddress{
 		Type:    v1.NodeInternalIP,
-		Address: node.Ip,
+		Address: node.IpPrivate,
 	}
+	fmt.Println("External ip: %v", node.IPPublic)
 	nodeExternalAddr := v1.NodeAddress{
 		Type:    v1.NodeExternalIP,
-		Address: node.Ip,
+		Address: node.IPPublic,
 	}
 	nodeHostName := v1.NodeAddress{
 		Type:    v1.NodeHostName,
-		Address: fmt.Sprintf("%v",node.Name),
+		Address: fmt.Sprintf("%v", node.Name),
 	}
 	addrs = append(addrs, nodeAddr)
 	addrs = append(addrs, nodeExternalAddr)
 	addrs = append(addrs, nodeHostName)
-
 
 	return addrs, nil
 }
@@ -60,25 +57,24 @@ func (i *instances) NodeAddressesByProviderID(ctx context.Context, providerID st
 
 	// if providerID == "autok8s://worker01" {
 
-	node,_ :=ReturnJson_by_provider(providerID)
+	node, _ := ReturnJson_by_provider(providerID)
 	var addrs []v1.NodeAddress
 
-
-		nodeAddr := v1.NodeAddress{
-			Type:    v1.NodeInternalIP,
-			Address: node.Ip,
-		}
-		nodeExternalAddr := v1.NodeAddress{
-			Type:    v1.NodeExternalIP,
-			Address: node.Ip,
-		}
-		nodeHostName := v1.NodeAddress{
-			Type:    v1.NodeHostName,
-			Address: fmt.Sprintf("%v",node.Name),
-		}
-		addrs = append(addrs, nodeAddr)
-		addrs = append(addrs, nodeExternalAddr)
-		addrs = append(addrs, nodeHostName)
+	nodeAddr := v1.NodeAddress{
+		Type:    v1.NodeInternalIP,
+		Address: node.IpPrivate,
+	}
+	nodeExternalAddr := v1.NodeAddress{
+		Type:    v1.NodeExternalIP,
+		Address: node.IPPublic,
+	}
+	nodeHostName := v1.NodeAddress{
+		Type:    v1.NodeHostName,
+		Address: fmt.Sprintf("%v", node.Name),
+	}
+	addrs = append(addrs, nodeAddr)
+	addrs = append(addrs, nodeExternalAddr)
+	addrs = append(addrs, nodeHostName)
 
 	return addrs, nil
 }
@@ -89,9 +85,8 @@ func (i *instances) NodeAddressesByProviderID(ctx context.Context, providerID st
 func (i *instances) InstanceID(ctx context.Context, nodeName types.NodeName) (string, error) {
 	klog.V(5).Infof("InstanceID(%v)", nodeName)
 
-
-	node,_ :=ReturnJson(string(nodeName))
-	instanceID := "autok8s://"+fmt.Sprintf("%v",node.Name)
+	node, _ := ReturnJson(string(nodeName))
+	instanceID := "autok8s://" + fmt.Sprintf("%v", node.Name)
 
 	return instanceID, nil
 }
@@ -100,9 +95,8 @@ func (i *instances) InstanceID(ctx context.Context, nodeName types.NodeName) (st
 func (i *instances) InstanceType(ctx context.Context, name types.NodeName) (string, error) {
 	klog.V(5).Infof("InstanceType(%v)", name)
 
-	node,_ :=ReturnJson(string(name))
+	node, _ := ReturnJson(string(name))
 	instanceType := node.Type
-
 
 	return instanceType, nil
 }
@@ -111,7 +105,7 @@ func (i *instances) InstanceType(ctx context.Context, name types.NodeName) (stri
 func (i *instances) InstanceTypeByProviderID(ctx context.Context, providerID string) (string, error) {
 	klog.V(5).Infof("InstanceTypeByProviderID(%v)", providerID)
 
-	node,_ :=ReturnJson_by_provider(providerID)
+	node, _ := ReturnJson_by_provider(providerID)
 	instanceType := node.Type
 
 	return instanceType, nil
@@ -129,7 +123,7 @@ func (i *instances) AddSSHKeyToAllInstances(ctx context.Context, user string, ke
 func (i *instances) CurrentNodeName(ctx context.Context, hostname string) (types.NodeName, error) {
 	klog.V(5).Infof("CurrentNodeName(%v)", hostname)
 
-	node,_ :=ReturnJson(hostname)
+	node, _ := ReturnJson(hostname)
 
 	return types.NodeName(node.Name), nil
 }
@@ -140,9 +134,7 @@ func (i *instances) CurrentNodeName(ctx context.Context, hostname string) (types
 func (i *instances) InstanceExistsByProviderID(ctx context.Context, providerID string) (bool, error) {
 	klog.V(5).Infof("InstanceExistsByProviderID(%v)", providerID)
 
-
-	_,exists :=ReturnJson_by_provider(providerID)
-
+	_, exists := ReturnJson_by_provider(providerID)
 
 	return exists, nil
 }

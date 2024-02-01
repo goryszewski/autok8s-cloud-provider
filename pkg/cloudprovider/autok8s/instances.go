@@ -25,16 +25,19 @@ func newInstances(c *http.Client) cloudprovider.Instances {
 func (i *instances) NodeAddresses(ctx context.Context, name types.NodeName) ([]v1.NodeAddress, error) {
 	klog.V(5).Infof("NodeAddresses(%v)", name)
 	node, _ := ReturnJson(string(name))
+	klog.V(5).Infof("NodeAddresses(%v) Data:(%v)", name, node)
 	var addrs []v1.NodeAddress
+
+	klog.V(5).Infof("NodeAddresses(%v) , Internal ip: (%v)", name, node.IP.Private)
+	klog.V(5).Infof("NodeAddresses(%v) , External ip: (%v)", name, node.IP.Public)
 
 	nodeAddr := v1.NodeAddress{
 		Type:    v1.NodeInternalIP,
-		Address: node.IpPrivate,
+		Address: node.IP.Private,
 	}
-	fmt.Println("External ip: %v", node.IPPublic)
 	nodeExternalAddr := v1.NodeAddress{
 		Type:    v1.NodeExternalIP,
-		Address: node.IPPublic,
+		Address: node.IP.Public,
 	}
 	nodeHostName := v1.NodeAddress{
 		Type:    v1.NodeHostName,
@@ -58,15 +61,16 @@ func (i *instances) NodeAddressesByProviderID(ctx context.Context, providerID st
 	// if providerID == "autok8s://worker01" {
 
 	node, _ := ReturnJson_by_provider(providerID)
+	klog.V(5).Infof("NodeAddressesByProviderID(%v) Data:(%v)", providerID, node)
 	var addrs []v1.NodeAddress
 
 	nodeAddr := v1.NodeAddress{
 		Type:    v1.NodeInternalIP,
-		Address: node.IpPrivate,
+		Address: node.IP.Private,
 	}
 	nodeExternalAddr := v1.NodeAddress{
 		Type:    v1.NodeExternalIP,
-		Address: node.IPPublic,
+		Address: node.IP.Public,
 	}
 	nodeHostName := v1.NodeAddress{
 		Type:    v1.NodeHostName,
@@ -86,6 +90,7 @@ func (i *instances) InstanceID(ctx context.Context, nodeName types.NodeName) (st
 	klog.V(5).Infof("InstanceID(%v)", nodeName)
 
 	node, _ := ReturnJson(string(nodeName))
+	klog.V(5).Infof("InstanceID(%v) Data:(%v)", string(nodeName), node)
 	instanceID := "autok8s://" + fmt.Sprintf("%v", node.Name)
 
 	return instanceID, nil
@@ -96,6 +101,7 @@ func (i *instances) InstanceType(ctx context.Context, name types.NodeName) (stri
 	klog.V(5).Infof("InstanceType(%v)", name)
 
 	node, _ := ReturnJson(string(name))
+	klog.V(5).Infof("InstanceType(%v) Data:(%v)", string(name), node)
 	instanceType := node.Type
 
 	return instanceType, nil

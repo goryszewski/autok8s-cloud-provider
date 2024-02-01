@@ -48,7 +48,7 @@ func (c *autok8s) Initialize(clientBuilder cloudprovider.ControllerClientBuilder
 
 func (c *autok8s) LoadBalancer() (cloudprovider.LoadBalancer, bool) {
 	klog.V(5).Info("LoadBalancer()")
-	return nil, true
+	return c.loadbalancers, true
 }
 
 func (c *autok8s) Instances() (cloudprovider.Instances, bool) {

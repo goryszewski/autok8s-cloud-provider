@@ -63,7 +63,8 @@ func (i *instances) NodeAddressesByProviderID(ctx context.Context, providerID st
 	node, _ := ReturnJson_by_provider(providerID)
 	klog.V(5).Infof("NodeAddressesByProviderID(%v) Data:(%v)", providerID, node)
 	var addrs []v1.NodeAddress
-
+	klog.V(5).Infof("NodeAddressesByProviderID(%v) , Internal ip: (%v)", providerID, node.IP.Private)
+	klog.V(5).Infof("NodeAddressesByProviderID(%v) , External ip: (%v)", providerID, node.IP.Public)
 	nodeAddr := v1.NodeAddress{
 		Type:    v1.NodeInternalIP,
 		Address: node.IP.Private,

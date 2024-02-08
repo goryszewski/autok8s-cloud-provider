@@ -1,5 +1,7 @@
 package autok8s
 
+// moving to next step learing - internal_client
+
 import (
 	"bytes"
 	"encoding/json"
@@ -57,7 +59,7 @@ func ReturnJson(nodeName string) (Worker, bool) {
 }
 
 func lbFree() LB {
-	resp, err := http.Get("http://10.17.3.1:8050/api/lbs") // DOTO fix static addres
+	resp, err := http.Get("http://10.17.3.1:8050/api/lbs?filter=2") // DOTO fix static addres
 	body, err := ioutil.ReadAll(resp.Body)
 	var payload LB
 	err = json.Unmarshal(body, &payload)

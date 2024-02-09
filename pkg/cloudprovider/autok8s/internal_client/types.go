@@ -1,6 +1,6 @@
 package internal_client
 
-type autok8sClient struct {
+type Autok8sClient struct {
 	URL string
 }
 

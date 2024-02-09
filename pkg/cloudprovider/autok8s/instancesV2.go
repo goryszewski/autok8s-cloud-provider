@@ -3,19 +3,20 @@ package autok8s
 import (
 	"context"
 	"fmt"
-	"net/http"
+	"strings"
 
+	"autok8s.io/autok8s/pkg/cloudprovider/autok8s/internal_client"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	cloudprovider "k8s.io/cloud-provider"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 type instancesv2 struct {
-	client *http.Client
+	client *internal_client.Autok8sClient
 }
 
-func newInstancesV2(c *http.Client) cloudprovider.InstancesV2 {
+func newInstancesV2(c *internal_client.Autok8sClient) cloudprovider.InstancesV2 {
 	return &instancesv2{
 		client: c,
 	}
@@ -31,7 +32,7 @@ func (i *instancesv2) InstanceMetadata(ctx context.Context, node *v1.Node) (*clo
 // NodeAddresses returns the addresses of the specified instance.
 func (i *instancesv2) NodeAddresses(ctx context.Context, name types.NodeName) ([]v1.NodeAddress, error) {
 	klog.V(5).Infof("NodeAddresses(%v)", name)
-	node, _ := ReturnJson(string(name))
+	node := i.client.GetIPByNodeName(string(name))
 	klog.V(5).Infof("NodeAddresses(%v) Data:(%v)", name, node)
 	var addrs []v1.NodeAddress
 
@@ -71,7 +72,8 @@ func (i *instancesv2) NodeAddressesByProviderID(ctx context.Context, providerID 
 
 	// if providerID == "autok8s://worker01" {
 
-	node, _ := ReturnJson_by_provider(providerID)
+	name := strings.Split(providerID, "//")[1]
+	node := i.client.GetIPByNodeName(string(name))
 	klog.V(5).Infof("NodeAddressesByProviderID(%v) Data:(%v)", providerID, node)
 	var addrs []v1.NodeAddress
 	klog.V(5).Infof("NodeAddressesByProviderID(%v) , Internal ip: (%v)", providerID, node.IP.Private)
@@ -101,7 +103,7 @@ func (i *instancesv2) NodeAddressesByProviderID(ctx context.Context, providerID 
 func (i *instancesv2) InstanceID(ctx context.Context, nodeName types.NodeName) (string, error) {
 	klog.V(5).Infof("InstanceID(%v)", nodeName)
 
-	node, _ := ReturnJson(string(nodeName))
+	node := i.client.GetIPByNodeName(string(nodeName))
 	klog.V(5).Infof("InstanceID(%v) Data:(%v)", string(nodeName), node)
 	instanceID := "autok8s://" + fmt.Sprintf("%v", node.Name)
 
@@ -112,7 +114,7 @@ func (i *instancesv2) InstanceID(ctx context.Context, nodeName types.NodeName) (
 func (i *instancesv2) InstanceType(ctx context.Context, name types.NodeName) (string, error) {
 	klog.V(5).Infof("InstanceType(%v)", name)
 
-	node, _ := ReturnJson(string(name))
+	node := i.client.GetIPByNodeName(string(name))
 	klog.V(5).Infof("InstanceType(%v) Data:(%v)", string(name), node)
 	instanceType := node.Type
 
@@ -123,7 +125,8 @@ func (i *instancesv2) InstanceType(ctx context.Context, name types.NodeName) (st
 func (i *instancesv2) InstanceTypeByProviderID(ctx context.Context, providerID string) (string, error) {
 	klog.V(5).Infof("InstanceTypeByProviderID(%v)", providerID)
 
-	node, _ := ReturnJson_by_provider(providerID)
+	name := strings.Split(providerID, "//")[1]
+	node := i.client.GetIPByNodeName(string(name))
 	instanceType := node.Type
 
 	return instanceType, nil
@@ -141,7 +144,7 @@ func (i *instancesv2) AddSSHKeyToAllInstances(ctx context.Context, user string, 
 func (i *instancesv2) CurrentNodeName(ctx context.Context, hostname string) (types.NodeName, error) {
 	klog.V(5).Infof("CurrentNodeName(%v)", hostname)
 
-	node, _ := ReturnJson(hostname)
+	node := i.client.GetIPByNodeName(string(hostname))
 
 	return types.NodeName(node.Name), nil
 }
@@ -152,9 +155,10 @@ func (i *instancesv2) CurrentNodeName(ctx context.Context, hostname string) (typ
 func (i *instancesv2) InstanceExistsByProviderID(ctx context.Context, providerID string) (bool, error) {
 	klog.V(5).Infof("InstanceExistsByProviderID(%v)", providerID)
 
-	_, exists := ReturnJson_by_provider(providerID)
-
-	return exists, nil
+	name := strings.Split(providerID, "//")[1]
+	exists := i.client.GetIPByNodeName(string(name))
+	klog.V(5).Infof("InstanceExistsByProviderID(%v):exists", exists)
+	return true, nil
 }
 
 // InstanceShutdownByProviderID returns true if the instance is shutdown in cloudprovider

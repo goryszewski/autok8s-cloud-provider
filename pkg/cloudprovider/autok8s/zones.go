@@ -2,18 +2,18 @@ package autok8s
 
 import (
 	"context"
-	"net/http"
 
+	"autok8s.io/autok8s/pkg/cloudprovider/autok8s/internal_client"
 	"k8s.io/apimachinery/pkg/types"
 	cloudprovider "k8s.io/cloud-provider"
 	"k8s.io/klog"
 )
 
 type zones struct {
-	client *http.Client
+	client *internal_client.Autok8sClient
 }
 
-func newZones(c *http.Client) cloudprovider.Zones {
+func newZones(c *internal_client.Autok8sClient) cloudprovider.Zones {
 	return &zones{
 		c,
 	}

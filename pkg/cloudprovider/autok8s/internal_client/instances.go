@@ -9,7 +9,7 @@ func (i *Autok8sClient) GetIPByNodeName(nodename string) Worker {
 
 	payload := map[string]string{"function": "GetNodeByHostname", "hostname": nodename}
 
-	body := call_api(i.URL+"/api/v1/k8s/node", payload)
+	body := call_api(i.URL+"/api/v1/k8s/node", payload, i.TOKEN)
 
 	var node Worker
 

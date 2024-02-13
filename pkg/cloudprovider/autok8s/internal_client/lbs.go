@@ -9,7 +9,7 @@ func (i *Autok8sClient) GetFreeLB() LB {
 
 	payload := map[string]string{"function": "GetFirstFreeLB"}
 
-	body := call_api(i.URL+"/api/v1/k8s/lb", payload)
+	body := call_api(i.URL+"/api/v1/k8s/lb", payload, i.TOKEN)
 
 	var lb LB
 
@@ -24,7 +24,7 @@ func (i *Autok8sClient) GetFreeLB() LB {
 
 func (i *Autok8sClient) BindLB(ip string, service string) bool {
 	payload := map[string]string{"function": "BindLB", "ip": ip, "service": service}
-	body := call_api(i.URL+"/api/v1/k8s/lb", payload)
+	body := call_api(i.URL+"/api/v1/k8s/lb", payload, i.TOKEN)
 	var lb LB
 
 	err := json.Unmarshal(body, &lb)
@@ -37,7 +37,7 @@ func (i *Autok8sClient) BindLB(ip string, service string) bool {
 }
 func (i *Autok8sClient) UnBindLB(service string) bool {
 	payload := map[string]string{"function": "UnBindLB", "service": service}
-	body := call_api(i.URL+"/api/v1/k8s/lb", payload)
+	body := call_api(i.URL+"/api/v1/k8s/lb", payload, i.TOKEN)
 	var lb LB
 
 	err := json.Unmarshal(body, &lb)

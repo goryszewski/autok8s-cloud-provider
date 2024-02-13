@@ -1,7 +1,8 @@
 package internal_client
 
 type Autok8sClient struct {
-	URL string
+	URL   string
+	TOKEN string
 }
 
 type Ip struct {

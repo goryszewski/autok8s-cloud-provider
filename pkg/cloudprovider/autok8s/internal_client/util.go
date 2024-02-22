@@ -52,5 +52,3 @@ func call_api(url string, payload map[string]string, token string) []byte {
 
 	return body
 }
-
-func get_token(url string)

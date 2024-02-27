@@ -3,17 +3,17 @@ package autok8s
 import (
 	"context"
 
-	"autok8s.io/autok8s/pkg/cloudprovider/autok8s/internal_client"
+	libvirtApiClient "github.com/goryszewski/libvirtApi-client/libvirtApiClient"
 	"k8s.io/apimachinery/pkg/types"
 	cloudprovider "k8s.io/cloud-provider"
 	"k8s.io/klog"
 )
 
 type zones struct {
-	client *internal_client.Autok8sClient
+	client *libvirtApiClient.Client
 }
 
-func newZones(c *internal_client.Autok8sClient) cloudprovider.Zones {
+func newZones(c *libvirtApiClient.Client) cloudprovider.Zones {
 	return &zones{
 		c,
 	}

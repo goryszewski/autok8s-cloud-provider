@@ -3,17 +3,17 @@ package autok8s
 import (
 	"context"
 
-	"autok8s.io/autok8s/pkg/cloudprovider/autok8s/internal_client"
+	libvirtApiClient "github.com/goryszewski/libvirtApi-client/libvirtApiClient"
 	v1 "k8s.io/api/core/v1"
 	cloudprovider "k8s.io/cloud-provider"
 	"k8s.io/klog/v2"
 )
 
 type loadbalancers struct {
-	client *internal_client.Autok8sClient
+	client *libvirtApiClient.Client
 }
 
-func newLoadBalancers(c *internal_client.Autok8sClient) cloudprovider.LoadBalancer {
+func newLoadBalancers(c *libvirtApiClient.Client) cloudprovider.LoadBalancer {
 	return &loadbalancers{
 		c,
 	}
@@ -47,9 +47,9 @@ func (lb *loadbalancers) GetLoadBalancerName(ctx context.Context, clusterName st
 func (lb *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName string, service *v1.Service, nodes []*v1.Node) (*v1.LoadBalancerStatus, error) {
 
 	var LoadBalancerI []v1.LoadBalancerIngress
-	lbfree := lb.client.GetFreeLB()
+	lbfree, _ := lb.client.GetFreeLB()
 	LoadBalancerI = append(LoadBalancerI, v1.LoadBalancerIngress{IP: lbfree.Ip})
-	test := lb.client.BindLB(lbfree.Ip, service.Namespace+service.Name)
+	test := lb.client.BindLB(lbfree.Ip, service.Namespace+service.Name, "test")
 	klog.V(5).Infof("EnsureLoadBalancer test (%v)", test)
 	klog.V(5).Infof("EnsureLoadBalancer(%v)", clusterName)
 	klog.V(5).Infof("EnsureLoadBalancer ---")

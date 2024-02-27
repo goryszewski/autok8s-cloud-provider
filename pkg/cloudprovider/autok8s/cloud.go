@@ -1,8 +1,11 @@
 package autok8s
 
 import (
+	"fmt"
 	"io"
 
+	libvirtApiClient "github.com/goryszewski/libvirtApi-client/libvirtApiClient"
+	gcfg "gopkg.in/gcfg.v1"
 	cloudprovider "k8s.io/cloud-provider"
 	"k8s.io/klog/v2"
 )
@@ -17,15 +20,40 @@ type autok8s struct {
 }
 
 func init() {
-	cloudprovider.RegisterCloudProvider(ProviderName, func(io.Reader) (cloudprovider.Interface, error) {
-		return newCloud()
+	cloudprovider.RegisterCloudProvider(ProviderName, func(config io.Reader) (cloudprovider.Interface, error) {
+		cfg, err := ReadConfig(config)
+		if err != nil {
+			klog.Warningf("failed to read config: %v", err)
+			return nil, err
+		}
+		return newCloud(cfg)
 	})
 }
 
+func ReadConfig(config io.Reader) (libvirtApiClient.Config, error) {
+	if config == nil {
+		return libvirtApiClient.Config{}, fmt.Errorf("no autkok8s cloud provider config file given")
+	}
+	var cfg libvirtApiClient.Config
+
+	err := gcfg.FatalOnly(gcfg.ReadInto(&cfg, config))
+	if err != nil {
+		return libvirtApiClient.Config{}, err
+	}
+
+	return cfg, nil
+}
+
 // newCloud returns a cloudprovider.Interface
-func newCloud() (cloudprovider.Interface, error) {
+func newCloud(conf libvirtApiClient.Config) (cloudprovider.Interface, error) {
 	// Bootstrap HTTP client here
-	cc := newAutok8sClient()
+	// cc := newAutok8sClient()
+
+	cc, err := libvirtApiClient.NewClient(conf)
+
+	if err != nil {
+		return &autok8s{}, err
+	}
 
 	return &autok8s{
 		instances:     newInstances(cc),

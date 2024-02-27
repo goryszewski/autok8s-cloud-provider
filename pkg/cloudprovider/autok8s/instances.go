@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"autok8s.io/autok8s/pkg/cloudprovider/autok8s/internal_client"
+	libvirtApiClient "github.com/goryszewski/libvirtApi-client/libvirtApiClient"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	cloudprovider "k8s.io/cloud-provider"
@@ -13,10 +13,10 @@ import (
 )
 
 type instances struct {
-	client *internal_client.Autok8sClient
+	client *libvirtApiClient.Client
 }
 
-func newInstances(c *internal_client.Autok8sClient) cloudprovider.Instances {
+func newInstances(c *libvirtApiClient.Client) cloudprovider.Instances {
 	return &instances{
 		client: c,
 	}

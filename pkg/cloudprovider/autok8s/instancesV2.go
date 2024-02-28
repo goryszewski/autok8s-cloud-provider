@@ -32,7 +32,7 @@ func (i *instancesv2) InstanceMetadata(ctx context.Context, node *v1.Node) (*clo
 // NodeAddresses returns the addresses of the specified instance.
 func (i *instancesv2) NodeAddresses(ctx context.Context, name types.NodeName) ([]v1.NodeAddress, error) {
 	klog.V(5).Infof("NodeAddresses(%v)", name)
-	node := i.client.GetIPByNodeName(string(name))
+	node, _ := i.client.GetIPByNodeName(string(name))
 	klog.V(5).Infof("NodeAddresses(%v) Data:(%v)", name, node)
 	var addrs []v1.NodeAddress
 
@@ -73,7 +73,7 @@ func (i *instancesv2) NodeAddressesByProviderID(ctx context.Context, providerID 
 	// if providerID == "autok8s://worker01" {
 
 	name := strings.Split(providerID, "//")[1]
-	node := i.client.GetIPByNodeName(string(name))
+	node, _ := i.client.GetIPByNodeName(string(name))
 	klog.V(5).Infof("NodeAddressesByProviderID(%v) Data:(%v)", providerID, node)
 	var addrs []v1.NodeAddress
 	klog.V(5).Infof("NodeAddressesByProviderID(%v) , Internal ip: (%v)", providerID, node.IP.Private)
@@ -103,7 +103,7 @@ func (i *instancesv2) NodeAddressesByProviderID(ctx context.Context, providerID 
 func (i *instancesv2) InstanceID(ctx context.Context, nodeName types.NodeName) (string, error) {
 	klog.V(5).Infof("InstanceID(%v)", nodeName)
 
-	node := i.client.GetIPByNodeName(string(nodeName))
+	node, _ := i.client.GetIPByNodeName(string(nodeName))
 	klog.V(5).Infof("InstanceID(%v) Data:(%v)", string(nodeName), node)
 	instanceID := "autok8s://" + fmt.Sprintf("%v", node.Name)
 
@@ -114,7 +114,7 @@ func (i *instancesv2) InstanceID(ctx context.Context, nodeName types.NodeName) (
 func (i *instancesv2) InstanceType(ctx context.Context, name types.NodeName) (string, error) {
 	klog.V(5).Infof("InstanceType(%v)", name)
 
-	node := i.client.GetIPByNodeName(string(name))
+	node, _ := i.client.GetIPByNodeName(string(name))
 	klog.V(5).Infof("InstanceType(%v) Data:(%v)", string(name), node)
 	instanceType := node.Type
 
@@ -126,7 +126,7 @@ func (i *instancesv2) InstanceTypeByProviderID(ctx context.Context, providerID s
 	klog.V(5).Infof("InstanceTypeByProviderID(%v)", providerID)
 
 	name := strings.Split(providerID, "//")[1]
-	node := i.client.GetIPByNodeName(string(name))
+	node, _ := i.client.GetIPByNodeName(string(name))
 	instanceType := node.Type
 
 	return instanceType, nil
@@ -144,7 +144,7 @@ func (i *instancesv2) AddSSHKeyToAllInstances(ctx context.Context, user string, 
 func (i *instancesv2) CurrentNodeName(ctx context.Context, hostname string) (types.NodeName, error) {
 	klog.V(5).Infof("CurrentNodeName(%v)", hostname)
 
-	node := i.client.GetIPByNodeName(string(hostname))
+	node, _ := i.client.GetIPByNodeName(string(hostname))
 
 	return types.NodeName(node.Name), nil
 }
@@ -156,7 +156,7 @@ func (i *instancesv2) InstanceExistsByProviderID(ctx context.Context, providerID
 	klog.V(5).Infof("InstanceExistsByProviderID(%v)", providerID)
 
 	name := strings.Split(providerID, "//")[1]
-	exists := i.client.GetIPByNodeName(string(name))
+	exists, _ := i.client.GetIPByNodeName(string(name))
 	klog.V(5).Infof("InstanceExistsByProviderID(%v):exists", exists)
 	return true, nil
 }

@@ -18,6 +18,9 @@ type autok8s struct {
 	zones         cloudprovider.Zones
 	loadbalancers cloudprovider.LoadBalancer
 }
+type Config struct {
+	Global libvirtApiClient.Config
+}
 
 func init() {
 	cloudprovider.RegisterCloudProvider(ProviderName, func(config io.Reader) (cloudprovider.Interface, error) {
@@ -32,16 +35,17 @@ func init() {
 
 func ReadConfig(config io.Reader) (libvirtApiClient.Config, error) {
 	if config == nil {
-		return libvirtApiClient.Config{}, fmt.Errorf("no autkok8s cloud provider config file given")
+		return libvirtApiClient.Config{}, fmt.Errorf("no autok8s cloud provider config file given")
 	}
-	var cfg libvirtApiClient.Config
+	var cfg Config
 
 	err := gcfg.FatalOnly(gcfg.ReadInto(&cfg, config))
 	if err != nil {
+
 		return libvirtApiClient.Config{}, err
 	}
-
-	return cfg, nil
+	klog.Infof("Config URL: %v and User: %v", *cfg.Global.Url, *cfg.Global.Username)
+	return cfg.Global, nil
 }
 
 // newCloud returns a cloudprovider.Interface

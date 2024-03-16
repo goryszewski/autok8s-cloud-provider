@@ -47,17 +47,28 @@ func (lb *loadbalancers) GetLoadBalancerName(ctx context.Context, clusterName st
 func (lb *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName string, service *v1.Service, nodes []*v1.Node) (*v1.LoadBalancerStatus, error) {
 
 	var LoadBalancerI []v1.LoadBalancerIngress
-	lbfree, _ := lb.client.GetFreeLB()
-	LoadBalancerI = append(LoadBalancerI, v1.LoadBalancerIngress{IP: lbfree.Ip})
-	test := lb.client.BindLB(lbfree.Ip, service.Namespace+service.Name, "test")
+	
+	bind_payload := lb.client.bindServiceLB{
+		service: Service
+		workers: nodes
+	}
+	ip, err := lb.client.BindLB(bind_payload)
+
+	if err != nil {
+		return v1.LoadBalancerStatus{},err
+	}
+
+	LoadBalancerI = append(LoadBalancerI, v1.LoadBalancerIngress{IP: ip})
+
 	klog.V(5).Infof("EnsureLoadBalancer test (%v)", test)
 	klog.V(5).Infof("EnsureLoadBalancer(%v)", clusterName)
 	klog.V(5).Infof("EnsureLoadBalancer ---")
 	klog.V(5).Infof("EnsureLoadBalancer service(%v)", service.Name)
 	klog.V(5).Infof("EnsureLoadBalancer service(%v)", service.Namespace)
 	klog.V(5).Infof("EnsureLoadBalancer service(%v)", service.Labels)
+	klog.V(5).Infof("EnsureLoadBalancer service(%v)", service.Spec.Ports)
 	klog.V(5).Infof("EnsureLoadBalancer ---")
-	// klog.V(5).Infof("EnsureLoadBalancer nodes(%v)", nodes)
+	klog.V(5).Infof("EnsureLoadBalancer nodes(%v)", nodes)
 	klog.V(5).Infof("EnsureLoadBalancer ---")
 	return &v1.LoadBalancerStatus{Ingress: LoadBalancerI}, nil
 }

@@ -1,0 +1,30 @@
+{
+  Ports:
+  [
+    {
+      Name:name-of-service-port
+      Protocol:TCP
+      AppProtocol:<nil>
+      Port:443
+      TargetPort: {
+        Type:1 IntVal:0 StrVal:http-web-svc
+      }
+      NodePort:31383
+    }
+  ]
+  Selector:
+    map[app.kubernetes.io/name:proxy]
+    ClusterIP:10.32.0.146 ClusterIPs:[10.32.0.146]
+    Type:LoadBalancer ExternalIPs:[]
+    SessionAffinity:None
+    LoadBalancerIP: LoadBalancerSourceRanges:[]
+    ExternalName: ExternalTrafficPolicy:Cluster
+    HealthCheckNodePort:0
+    PublishNotReadyAddresses:false
+    SessionAffinityConfig:nil
+    IPFamilies:[IPv4]
+    IPFamilyPolicy:0xc00084d8c0
+    AllocateLoadBalancerNodePorts:0xc00090099c
+    LoadBalancerClass:<nil>
+    InternalTrafficPolicy:0xc00084d8d0
+}

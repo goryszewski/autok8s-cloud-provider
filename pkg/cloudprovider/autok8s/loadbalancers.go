@@ -19,6 +19,23 @@ func newLoadBalancers(c *libvirtApiClient.Client) cloudprovider.LoadBalancer {
 	}
 }
 
+func prepServiceLoadBalancerPayload(service *v1.Service) libvirtApiClient.ServiceLoadBalancer {
+	var ports []libvirtApiClient.Port_Service
+
+	for _, port := range service.Spec.Ports {
+		pre_port := libvirtApiClient.Port_Service{Name: port.Name, Protocol: string(port.Protocol), Port: int(port.Port), NodePort: int(port.NodePort)}
+		ports = append(ports, pre_port)
+	}
+
+	bind_payload := libvirtApiClient.ServiceLoadBalancer{
+		Ports:     ports,
+		Name:      service.Name,
+		Namespace: service.Namespace,
+	}
+
+	return bind_payload
+}
+
 // Implementations must treat the *v1.Service parameter as read-only and not modify it.
 // Parameter 'clusterName' is the name of the cluster as presented to kube-controller-manager
 func (lb *loadbalancers) GetLoadBalancer(ctx context.Context, clusterName string, service *v1.Service) (status *v1.LoadBalancerStatus, exists bool, err error) {
@@ -45,9 +62,9 @@ func (lb *loadbalancers) GetLoadBalancerName(ctx context.Context, clusterName st
 // parameters as read-only and not modify them.
 // Parameter 'clusterName' is the name of the cluster as presented to kube-controller-manager
 func (lb *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName string, service *v1.Service, nodes []*v1.Node) (*v1.LoadBalancerStatus, error) {
-	bind_service := PreperbindServiceLB(service)
+	prepServiceLoadBalancer := prepServiceLoadBalancerPayload(service)
 
-	ip, err := lb.client.CreateLoadBalancer(bind_service)
+	ip, err := lb.client.CreateLoadBalancer(prepServiceLoadBalancer)
 
 	if err != nil {
 		klog.V(5).Infof("ERROR: EnsureLoadBalancer (%v)", err)
@@ -77,9 +94,9 @@ func (lb *loadbalancers) UpdateLoadBalancer(ctx context.Context, clusterName str
 	klog.V(5).Infof("UpdateLoadBalancer ---")
 	klog.V(5).Infof("UpdateLoadBalancer service(%v)", service.Name)
 
-	bind_service := PreperbindServiceLB(service)
+	prepServiceLoadBalancer := prepServiceLoadBalancerPayload(service)
 
-	err := lb.client.UpdateLoadBalancer(bind_service)
+	err := lb.client.UpdateLoadBalancer(prepServiceLoadBalancer)
 
 	if err != nil {
 		klog.V(5).Infof("ERROR: UpdateLoadBalancer (%v)", err)

@@ -3,6 +3,8 @@ package autok8s
 import (
 	"fmt"
 	"io"
+	"net/http"
+	"time"
 
 	libvirtApiClient "github.com/goryszewski/libvirtApi-client/libvirtApiClient"
 	gcfg "gopkg.in/gcfg.v1"
@@ -53,7 +55,7 @@ func newCloud(conf libvirtApiClient.Config) (cloudprovider.Interface, error) {
 	// Bootstrap HTTP client here
 	// cc := newAutok8sClient()
 
-	cc, err := libvirtApiClient.NewClient(conf)
+	cc, err := libvirtApiClient.NewClient(conf, &http.Client{Timeout: 10 * time.Second})
 
 	if err != nil {
 		return &autok8s{}, err

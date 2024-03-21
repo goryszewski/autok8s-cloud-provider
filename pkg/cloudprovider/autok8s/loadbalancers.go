@@ -60,10 +60,13 @@ func prepServiceLoadBalancerPayload(service *v1.Service, nodes []*v1.Node) libvi
 // Implementations must treat the *v1.Service parameter as read-only and not modify it.
 // Parameter 'clusterName' is the name of the cluster as presented to kube-controller-manager
 func (lb *loadbalancers) GetLoadBalancer(ctx context.Context, clusterName string, service *v1.Service) (status *v1.LoadBalancerStatus, exists bool, err error) {
-	klog.V(5).Infof("GetLoadBalancer ---")
+	klog.V(5).Infof("[GetLoadBalancer]")
 	prepServiceLoadBalancer := prepServiceLoadBalancerPayload(service, nil)
-	status1 := lb.client.DeleteLoadBalancer(prepServiceLoadBalancer)
-	klog.V(5).Infof("GetLoadBalancer STATUS(%v)", status1)
+	ip, _ := lb.client.GetLoadBalancer(prepServiceLoadBalancer)
+	if ip != "" {
+		var LoadBalancerI []v1.LoadBalancerIngress = []v1.LoadBalancerIngress{v1.LoadBalancerIngress{IP: ip}}
+		return &v1.LoadBalancerStatus{Ingress: LoadBalancerI}, true, nil
+	}
 	return nil, false, nil
 }
 
@@ -72,9 +75,8 @@ func (lb *loadbalancers) GetLoadBalancer(ctx context.Context, clusterName string
 func (lb *loadbalancers) GetLoadBalancerName(ctx context.Context, clusterName string, service *v1.Service) string {
 	klog.V(5).Infof("GetLoadBalancerName ---")
 	prepServiceLoadBalancer := prepServiceLoadBalancerPayload(service, nil)
-	status := lb.client.DeleteLoadBalancer(prepServiceLoadBalancer)
-	klog.V(5).Infof("GetLoadBalancerName STATUS(%v)", status)
-	return ""
+	ip, _ := lb.client.GetLoadBalancer(prepServiceLoadBalancer)
+	return ip
 }
 
 // EnsureLoadBalancer creates a new load balancer 'name', or updates the existing one. Returns the status of the balancer
@@ -82,17 +84,30 @@ func (lb *loadbalancers) GetLoadBalancerName(ctx context.Context, clusterName st
 // parameters as read-only and not modify them.
 // Parameter 'clusterName' is the name of the cluster as presented to kube-controller-manager
 func (lb *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName string, service *v1.Service, nodes []*v1.Node) (*v1.LoadBalancerStatus, error) {
-	prepServiceLoadBalancer := prepServiceLoadBalancerPayload(service, nodes)
-	//  to FIX update
-	ip, err := lb.client.CreateLoadBalancer(prepServiceLoadBalancer)
+	klog.V(5).Infof("EnsureLoadBalancer")
 
-	if err != nil {
-		klog.V(5).Infof("ERROR: EnsureLoadBalancer (%v)", err)
-		return nil, err
+	prepServiceLoadBalancer := prepServiceLoadBalancerPayload(service, nodes)
+
+	ip, err := lb.client.GetLoadBalancer(prepServiceLoadBalancer)
+
+	if ip == "" {
+		klog.V(5).Infof("EnsureLoadBalancer - LB not exist")
+		ip, err = lb.client.CreateLoadBalancer(prepServiceLoadBalancer)
+		if err != nil {
+			klog.V(5).Infof("EnsureLoadBalancer : CreateLoadBalancer (%v)", err)
+			return nil, err
+		}
+	} else {
+		klog.V(5).Infof("EnsureLoadBalancer - LB - do update")
+		err = lb.client.UpdateLoadBalancer(prepServiceLoadBalancer)
+		if err != nil {
+			klog.V(5).Infof("ERROR: UpdateLoadBalancer (%v)", err)
+			return nil, err
+		}
 	}
-	var LoadBalancerI []v1.LoadBalancerIngress
-	LoadBalancerI = append(LoadBalancerI, v1.LoadBalancerIngress{IP: ip})
-	klog.V(5).Infof("EnsureLoadBalancer ---")
+
+	var LoadBalancerI []v1.LoadBalancerIngress = []v1.LoadBalancerIngress{v1.LoadBalancerIngress{IP: ip}}
+
 	return &v1.LoadBalancerStatus{Ingress: LoadBalancerI}, nil
 }
 
@@ -101,14 +116,14 @@ func (lb *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName str
 // parameters as read-only and not modify them.
 // Parameter 'clusterName' is the name of the cluster as presented to kube-controller-manager
 func (lb *loadbalancers) UpdateLoadBalancer(ctx context.Context, clusterName string, service *v1.Service, nodes []*v1.Node) error {
-	klog.V(5).Infof("UpdateLoadBalancer ---")
+	klog.V(5).Infof("[UpdateLoadBalancer]")
 
 	prepServiceLoadBalancer := prepServiceLoadBalancerPayload(service, nil)
 
 	err := lb.client.UpdateLoadBalancer(prepServiceLoadBalancer)
 
 	if err != nil {
-		klog.V(5).Infof("ERROR: UpdateLoadBalancer (%v)", err)
+		klog.V(5).Infof("[UpdateLoadBalancer][ERROR] (%v)", err)
 		return err
 	}
 
@@ -124,9 +139,17 @@ func (lb *loadbalancers) UpdateLoadBalancer(ctx context.Context, clusterName str
 // Implementations must treat the *v1.Service parameter as read-only and not modify it.
 // Parameter 'clusterName' is the name of the cluster as presented to kube-controller-manager
 func (lb *loadbalancers) EnsureLoadBalancerDeleted(ctx context.Context, clusterName string, service *v1.Service) error {
-	klog.V(5).Infof("EnsureLoadBalancerDeleted ---")
+	klog.V(5).Infof("[EnsureLoadBalancerDeleted]")
 	prepServiceLoadBalancer := prepServiceLoadBalancerPayload(service, nil)
-	status := lb.client.DeleteLoadBalancer(prepServiceLoadBalancer)
-	klog.V(5).Infof("EnsureLoadBalancerDeleted STATUS(%v)", status)
+
+	ip, _ := lb.client.GetLoadBalancer(prepServiceLoadBalancer)
+	if ip != "" {
+		klog.V(5).Infof("[EnsureLoadBalancerDeleted] - LB exist - call DeleteLoadBalancer")
+		err := lb.client.DeleteLoadBalancer(prepServiceLoadBalancer)
+		if err != nil {
+			klog.V(5).Infof("[EnsureLoadBalancerDeleted][ERROR] (%v)", err)
+			return err
+		}
+	}
 	return nil
 }

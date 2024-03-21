@@ -105,6 +105,10 @@ github.com/goryszewski/libvirtApi-client v0.0.0-20240318194214-ca36f456fb2a h1:1
 github.com/goryszewski/libvirtApi-client v0.0.0-20240318194214-ca36f456fb2a/go.mod h1:Z2Ax/DoljpOA3fAY62ptRoBegFA2WfUD0JtFSOAKOHI=
 github.com/goryszewski/libvirtApi-client v0.0.0-20240320224644-bcac18459305 h1:IsgVvSsWWarpr1QQYEGiUF7sLEYLF5xtEz+3aAr2SfA=
 github.com/goryszewski/libvirtApi-client v0.0.0-20240320224644-bcac18459305/go.mod h1:Z2Ax/DoljpOA3fAY62ptRoBegFA2WfUD0JtFSOAKOHI=
+github.com/goryszewski/libvirtApi-client v0.0.0-20240321112722-c81118bf43c2 h1:Imblvn80a4ciHoW4EqZEVqCbCld0d5IDZ+O+s5DP8To=
+github.com/goryszewski/libvirtApi-client v0.0.0-20240321112722-c81118bf43c2/go.mod h1:Z2Ax/DoljpOA3fAY62ptRoBegFA2WfUD0JtFSOAKOHI=
+github.com/goryszewski/libvirtApi-client v0.0.0-20240321115254-96e56132b983 h1:3YUYARunf0uclpY7vAYNndLmsZ2kpqvVj7+W6+cY+jo=
+github.com/goryszewski/libvirtApi-client v0.0.0-20240321115254-96e56132b983/go.mod h1:Z2Ax/DoljpOA3fAY62ptRoBegFA2WfUD0JtFSOAKOHI=
 github.com/grpc-ecosystem/go-grpc-middleware v1.3.0 h1:+9834+KizmvFV7pXQGSXQTsaWhq2GjuNUt0aUU0YBYw=
 github.com/grpc-ecosystem/go-grpc-middleware v1.3.0/go.mod h1:z0ButlSOZa5vEBq9m2m2hlwIgKw+rp3sdCBRoJY+30Y=
 github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 h1:Ovs26xHkKqVztRpIrF/92BcuyuQ/YW4NSIpoGtfXNho=

@@ -62,9 +62,9 @@ func prepServiceLoadBalancerPayload(service *v1.Service, nodes []*v1.Node) libvi
 func (lb *loadbalancers) GetLoadBalancer(ctx context.Context, clusterName string, service *v1.Service) (status *v1.LoadBalancerStatus, exists bool, err error) {
 	klog.V(5).Infof("[GetLoadBalancer]")
 	prepServiceLoadBalancer := prepServiceLoadBalancerPayload(service, nil)
-	ip, _ := lb.client.GetLoadBalancer(prepServiceLoadBalancer)
-	if ip != "" {
-		var LoadBalancerI []v1.LoadBalancerIngress = []v1.LoadBalancerIngress{v1.LoadBalancerIngress{IP: ip}}
+	loadbalancer, exist, _ := lb.client.GetLoadBalancer(prepServiceLoadBalancer)
+	if exist {
+		var LoadBalancerI []v1.LoadBalancerIngress = []v1.LoadBalancerIngress{v1.LoadBalancerIngress{IP: loadbalancer.Ip}}
 		return &v1.LoadBalancerStatus{Ingress: LoadBalancerI}, true, nil
 	}
 	return nil, false, nil
@@ -75,8 +75,8 @@ func (lb *loadbalancers) GetLoadBalancer(ctx context.Context, clusterName string
 func (lb *loadbalancers) GetLoadBalancerName(ctx context.Context, clusterName string, service *v1.Service) string {
 	klog.V(5).Infof("GetLoadBalancerName ---")
 	prepServiceLoadBalancer := prepServiceLoadBalancerPayload(service, nil)
-	ip, _ := lb.client.GetLoadBalancer(prepServiceLoadBalancer)
-	return ip
+	loadbalancer, _, _ := lb.client.GetLoadBalancer(prepServiceLoadBalancer)
+	return loadbalancer.Ip
 }
 
 // EnsureLoadBalancer creates a new load balancer 'name', or updates the existing one. Returns the status of the balancer
@@ -85,23 +85,30 @@ func (lb *loadbalancers) GetLoadBalancerName(ctx context.Context, clusterName st
 // Parameter 'clusterName' is the name of the cluster as presented to kube-controller-manager
 func (lb *loadbalancers) EnsureLoadBalancer(ctx context.Context, clusterName string, service *v1.Service, nodes []*v1.Node) (*v1.LoadBalancerStatus, error) {
 	klog.V(5).Infof("EnsureLoadBalancer")
-
+	ip := ""
 	prepServiceLoadBalancer := prepServiceLoadBalancerPayload(service, nodes)
 
-	ip, err := lb.client.GetLoadBalancer(prepServiceLoadBalancer)
+	loadbalancer, exist, err := lb.client.GetLoadBalancer(prepServiceLoadBalancer)
 
-	if ip == "" {
-		klog.V(5).Infof("EnsureLoadBalancer - LB not exist")
-		ip, err = lb.client.CreateLoadBalancer(prepServiceLoadBalancer)
-		if err != nil {
-			klog.V(5).Infof("EnsureLoadBalancer : CreateLoadBalancer (%v)", err)
-			return nil, err
-		}
-	} else {
+	if err != nil {
+		klog.V(5).Infof("EnsureLoadBalancer : GetLoadBalancer (%v)", err)
+		return nil, err
+	}
+	if exist {
+		ip = loadbalancer.Ip
 		klog.V(5).Infof("EnsureLoadBalancer - LB - do update")
+
 		err = lb.client.UpdateLoadBalancer(prepServiceLoadBalancer)
 		if err != nil {
 			klog.V(5).Infof("ERROR: UpdateLoadBalancer (%v)", err)
+			return nil, err
+		}
+	} else {
+		klog.V(5).Infof("EnsureLoadBalancer - LB not exist")
+
+		ip, err = lb.client.CreateLoadBalancer(prepServiceLoadBalancer)
+		if err != nil {
+			klog.V(5).Infof("EnsureLoadBalancer : CreateLoadBalancer (%v)", err)
 			return nil, err
 		}
 	}
@@ -142,12 +149,16 @@ func (lb *loadbalancers) EnsureLoadBalancerDeleted(ctx context.Context, clusterN
 	klog.V(5).Infof("[EnsureLoadBalancerDeleted]")
 	prepServiceLoadBalancer := prepServiceLoadBalancerPayload(service, nil)
 
-	ip, _ := lb.client.GetLoadBalancer(prepServiceLoadBalancer)
-	if ip != "" {
-		klog.V(5).Infof("[EnsureLoadBalancerDeleted] - LB exist - call DeleteLoadBalancer")
+	ip, exist, err := lb.client.GetLoadBalancer(prepServiceLoadBalancer)
+	if err != nil {
+		klog.V(5).Infof("[EnsureLoadBalancerDeleted][GetLoadBalancer][ERROR] (%v)", err)
+		return err
+	}
+	if exist {
+		klog.V(5).Infof("[EnsureLoadBalancerDeleted] - LB exist:%v - call DeleteLoadBalancer", ip)
 		err := lb.client.DeleteLoadBalancer(prepServiceLoadBalancer)
 		if err != nil {
-			klog.V(5).Infof("[EnsureLoadBalancerDeleted][ERROR] (%v)", err)
+			klog.V(5).Infof("[EnsureLoadBalancerDeleted][DeleteLoadBalancer][ERROR] (%v)", err)
 			return err
 		}
 	}

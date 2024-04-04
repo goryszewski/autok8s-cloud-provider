@@ -30,16 +30,16 @@ func (i *instances) NodeAddresses(ctx context.Context, name types.NodeName) ([]v
 	klog.V(5).Infof("NodeAddresses(%v) Data:(%v)", name, node)
 	var addrs []v1.NodeAddress
 
-	klog.V(5).Infof("NodeAddresses(%v) , Internal ip: (%v)", name, node.IP.Private)
-	klog.V(5).Infof("NodeAddresses(%v) , External ip: (%v)", name, node.IP.Public)
+	klog.V(5).Infof("NodeAddresses(%v) , Internal ip: (%v)", name, node.Internal)
+	klog.V(5).Infof("NodeAddresses(%v) , External ip: (%v)", name, node.External)
 
 	nodeAddr := v1.NodeAddress{
 		Type:    v1.NodeInternalIP,
-		Address: node.IP.Private,
+		Address: node.Internal,
 	}
 	nodeExternalAddr := v1.NodeAddress{
 		Type:    v1.NodeExternalIP,
-		Address: node.IP.Public,
+		Address: node.External,
 	}
 	nodeHostName := v1.NodeAddress{
 		Type:    v1.NodeHostName,
@@ -64,15 +64,15 @@ func (i *instances) NodeAddressesByProviderID(ctx context.Context, providerID st
 	node, _ := i.client.GetIPByNodeName(string(name))
 	klog.V(5).Infof("NodeAddressesByProviderID(%v) Data:(%v)", providerID, node)
 	var addrs []v1.NodeAddress
-	klog.V(5).Infof("NodeAddressesByProviderID(%v) , Internal ip: (%v)", providerID, node.IP.Private)
-	klog.V(5).Infof("NodeAddressesByProviderID(%v) , External ip: (%v)", providerID, node.IP.Public)
+	klog.V(5).Infof("NodeAddressesByProviderID(%v) , Internal ip: (%v)", providerID, node.Internal)
+	klog.V(5).Infof("NodeAddressesByProviderID(%v) , External ip: (%v)", providerID, node.External)
 	nodeAddr := v1.NodeAddress{
 		Type:    v1.NodeInternalIP,
-		Address: node.IP.Private,
+		Address: node.Internal,
 	}
 	nodeExternalAddr := v1.NodeAddress{
 		Type:    v1.NodeExternalIP,
-		Address: node.IP.Public,
+		Address: node.External,
 	}
 	nodeHostName := v1.NodeAddress{
 		Type:    v1.NodeHostName,

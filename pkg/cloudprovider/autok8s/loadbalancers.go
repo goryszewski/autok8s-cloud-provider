@@ -19,7 +19,7 @@ func newLoadBalancers(c *libvirtApiClient.Client) cloudprovider.LoadBalancer {
 	}
 }
 
-func prepServiceLoadBalancerPayload(service *v1.Service, nodes []*v1.Node) libvirtApiClient.ServiceLoadBalancer {
+func prepServiceLoadBalancerPayload(service *v1.Service, nodes []*v1.Node) libvirtApiClient.LoadBalancer {
 	var ports []libvirtApiClient.Port_Service
 	var _nodes []libvirtApiClient.Node
 
@@ -34,20 +34,20 @@ func prepServiceLoadBalancerPayload(service *v1.Service, nodes []*v1.Node) libvi
 			for _, address := range item.Status.Addresses {
 
 				if address.Type == "InternalIP" {
-					node.Private_ip = address.Address
+					node.Internal = address.Address
 				} else if address.Type == "ExternalIP" {
-					node.Public_ip = address.Address
+					node.External = address.Address
 				}
 			}
 			_nodes = append(_nodes, node)
 
 		}
 	} else {
-		node := libvirtApiClient.Node{Name: "", Public_ip: "", Private_ip: ""}
+		node := libvirtApiClient.Node{Name: "", External: "", Internal: ""}
 		_nodes = append(_nodes, node)
 	}
 
-	bind_payload := libvirtApiClient.ServiceLoadBalancer{
+	bind_payload := libvirtApiClient.LoadBalancer{
 		Ports:     ports,
 		Name:      service.Name,
 		Namespace: service.Namespace,

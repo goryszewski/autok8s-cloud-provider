@@ -16,6 +16,39 @@ type instancesv2 struct {
 	client *libvirtApiClient.Client
 }
 
+func GetIP(node *libvirtApiClient.NodeV2) []v1.NodeAddress {
+	klog.V(5).Infof("GetIP_NodeAddresses(%v) , IP: (%#+v)", node.Name, node.Interface)
+
+	var addrs []v1.NodeAddress
+
+	for _, value := range node.Interface {
+		klog.V(5).Infof("GetIP_NodeAddresses(%v) , value ip: (%#+v)", node.Name, value.Name)
+
+		nodeAddr := v1.NodeAddress{}
+		if value.Name == "public" {
+			klog.V(5).Infof("GetIP_NodeAddresses(%v) , External ip: (%v)", node.Name, value.Ip)
+
+			nodeAddr.Address = value.Ip
+			nodeAddr.Type = v1.NodeExternalIP
+		} else {
+			klog.V(5).Infof("GetIP_NodeAddresses(%v) , Internal ip: (%v)", node.Name, value.Ip)
+
+			nodeAddr.Address = value.Ip
+			nodeAddr.Type = v1.NodeInternalIP
+		}
+		addrs = append(addrs, nodeAddr)
+
+	}
+
+	nodeHostName := v1.NodeAddress{
+		Type:    v1.NodeHostName,
+		Address: fmt.Sprintf("%v", node.Name),
+	}
+
+	addrs = append(addrs, nodeHostName)
+	return addrs
+}
+
 func newInstancesV2(c *libvirtApiClient.Client) cloudprovider.InstancesV2 {
 	return &instancesv2{
 		client: c,
@@ -31,35 +64,18 @@ func (i *instancesv2) InstanceMetadata(ctx context.Context, node *v1.Node) (*clo
 
 // NodeAddresses returns the addresses of the specified instance.
 func (i *instancesv2) NodeAddresses(ctx context.Context, name types.NodeName) ([]v1.NodeAddress, error) {
-	klog.V(5).Infof("NodeAddresses(%v)", name)
-	node, _ := i.client.GetIPByNodeName(string(name))
-	klog.V(5).Infof("NodeAddresses(%v) Data:(%v)", name, node)
-	var addrs []v1.NodeAddress
-
-	klog.V(5).Infof("NodeAddresses(%v) , Internal ip: (%v)", name, node.Internal)
-	klog.V(5).Infof("NodeAddresses(%v) , External ip: (%v)", name, node.External)
-
-	nodeAddr := v1.NodeAddress{
-		Type:    v1.NodeInternalIP,
-		Address: node.Internal,
+	node, err := i.client.GetNodeByName(string(name))
+	if err != nil {
+		return nil, err
 	}
-	nodeExternalAddr := v1.NodeAddress{
-		Type:    v1.NodeExternalIP,
-		Address: node.External,
-	}
-	nodeHostName := v1.NodeAddress{
-		Type:    v1.NodeHostName,
-		Address: fmt.Sprintf("%v", node.Name),
-	}
-	addrs = append(addrs, nodeAddr)
-	addrs = append(addrs, nodeExternalAddr)
-	addrs = append(addrs, nodeHostName)
+	klog.V(5).Infof("NodeAddresses(%v) Data:(%#+v)", name, node)
+	var addrs []v1.NodeAddress = GetIP(node)
 
 	return addrs, nil
 }
 func (i *instancesv2) InstanceExists(ctx context.Context, node *v1.Node) (bool, error) {
 	klog.V(5).Infof("InstanceExists(%v)", node.Name)
-	node, err := i.client.GetNodeByName(node.Name)
+	_, err := i.client.GetNodeByName(node.Name)
 	if err != nil {
 		return false, err
 	}
@@ -81,26 +97,7 @@ func (i *instancesv2) NodeAddressesByProviderID(ctx context.Context, providerID 
 	if err != nil {
 		return nil, err
 	}
-
-	klog.V(5).Infof("NodeAddressesByProviderID(%v) Data:(%v)", providerID, node)
-	var addrs []v1.NodeAddress
-	klog.V(5).Infof("NodeAddressesByProviderID(%v) , Internal ip: (%v)", providerID, node.Internal)
-	klog.V(5).Infof("NodeAddressesByProviderID(%v) , External ip: (%v)", providerID, node.External)
-	nodeAddr := v1.NodeAddress{
-		Type:    v1.NodeInternalIP,
-		Address: node.Internal,
-	}
-	nodeExternalAddr := v1.NodeAddress{
-		Type:    v1.NodeExternalIP,
-		Address: node.External,
-	}
-	nodeHostName := v1.NodeAddress{
-		Type:    v1.NodeHostName,
-		Address: fmt.Sprintf("%v", node.Name),
-	}
-	addrs = append(addrs, nodeAddr)
-	addrs = append(addrs, nodeExternalAddr)
-	addrs = append(addrs, nodeHostName)
+	var addrs []v1.NodeAddress = GetIP(node)
 
 	return addrs, nil
 }

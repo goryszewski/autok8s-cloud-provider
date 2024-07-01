@@ -17,21 +17,21 @@ type instancesv2 struct {
 }
 
 func GetIP(node *libvirtApiClient.NodeV2) []v1.NodeAddress {
-	klog.V(5).Infof("GetIP_NodeAddresses(%v) , IP: (%#+v)", node.Name, node.Interface)
+	klog.V(5).Infof("[V2] - GetIP_NodeAddresses(%v) , IP: (%#+v)", node.Name, node.Interface)
 
 	var addrs []v1.NodeAddress
 
 	for _, value := range node.Interface {
-		klog.V(5).Infof("GetIP_NodeAddresses(%v) , value ip: (%#+v)", node.Name, value.Name)
+		klog.V(5).Infof("[V2] - GetIP_NodeAddresses(%v) , value ip: (%#+v)", node.Name, value.Name)
 
 		nodeAddr := v1.NodeAddress{}
 		if value.Name == "public" {
-			klog.V(5).Infof("GetIP_NodeAddresses(%v) , External ip: (%v)", node.Name, value.Ip)
+			klog.V(5).Infof("[V2] - GetIP_NodeAddresses(%v) , External ip: (%v)", node.Name, value.Ip)
 
 			nodeAddr.Address = value.Ip
 			nodeAddr.Type = v1.NodeExternalIP
 		} else {
-			klog.V(5).Infof("GetIP_NodeAddresses(%v) , Internal ip: (%v)", node.Name, value.Ip)
+			klog.V(5).Infof("[V2] - GetIP_NodeAddresses(%v) , Internal ip: (%v)", node.Name, value.Ip)
 
 			nodeAddr.Address = value.Ip
 			nodeAddr.Type = v1.NodeInternalIP
@@ -50,31 +50,45 @@ func GetIP(node *libvirtApiClient.NodeV2) []v1.NodeAddress {
 }
 
 func newInstancesV2(c *libvirtApiClient.Client) cloudprovider.InstancesV2 {
+	klog.V(5).Infof("call newInstancesV2")
 	return &instancesv2{
 		client: c,
 	}
 }
 func (i *instancesv2) InstanceShutdown(ctx context.Context, node *v1.Node) (bool, error) {
+	klog.V(5).Infof("[V2] - InstanceShutdown(%v)", node.Name)
 	return false, nil
 }
 func (i *instancesv2) InstanceMetadata(ctx context.Context, node *v1.Node) (*cloudprovider.InstanceMetadata, error) {
+	klog.V(5).Infof("[V2] - InstanceMetadata(%v)", node.Name)
 
-	return &cloudprovider.InstanceMetadata{}, nil
+	node2, err := i.client.GetNodeByName(node.Name)
+	if err != nil {
+		return nil, err
+	}
+	return &cloudprovider.InstanceMetadata{
+		ProviderID:    fmt.Sprintf("%s://%s", ProviderName, node2.Name),
+		InstanceType:  node2.Type,
+		NodeAddresses: GetIP(node2),
+		Region:        "PL1",
+		Zone:          "A",
+	}, nil
 }
 
 // NodeAddresses returns the addresses of the specified instance.
 func (i *instancesv2) NodeAddresses(ctx context.Context, name types.NodeName) ([]v1.NodeAddress, error) {
+	klog.V(5).Infof("call NodeAddresses")
 	node, err := i.client.GetNodeByName(string(name))
 	if err != nil {
 		return nil, err
 	}
-	klog.V(5).Infof("NodeAddresses(%v) Data:(%#+v)", name, node)
+	klog.V(5).Infof("[V2] - NodeAddresses(%v) Data:(%#+v)", name, node)
 	var addrs []v1.NodeAddress = GetIP(node)
 
 	return addrs, nil
 }
 func (i *instancesv2) InstanceExists(ctx context.Context, node *v1.Node) (bool, error) {
-	klog.V(5).Infof("InstanceExists(%v)", node.Name)
+	klog.V(5).Infof("[V2] - InstanceExists(%v)", node.Name)
 	_, err := i.client.GetNodeByName(node.Name)
 	if err != nil {
 		return false, err
@@ -88,7 +102,7 @@ func (i *instancesv2) InstanceExists(ctx context.Context, node *v1.Node) (bool, 
 // from the node whose nodeaddresses are being queried. i.e. local metadata
 // services cannot be used in this method to obtain nodeaddresses
 func (i *instancesv2) NodeAddressesByProviderID(ctx context.Context, providerID string) ([]v1.NodeAddress, error) {
-	klog.V(5).Infof("NodeAddressesByProviderID(%v)", providerID)
+	klog.V(5).Infof("[V2] - NodeAddressesByProviderID(%v)", providerID)
 
 	// if providerID == "autok8s://worker01" {
 
@@ -106,14 +120,14 @@ func (i *instancesv2) NodeAddressesByProviderID(ctx context.Context, providerID 
 // Note that if the instance does not exist, we must return ("", cloudprovider.InstanceNotFound)
 // cloudprovider.InstanceNotFound should NOT be returned for instances that exist but are stopped/sleeping
 func (i *instancesv2) InstanceID(ctx context.Context, nodeName types.NodeName) (string, error) {
-	klog.V(5).Infof("InstanceID(%v)", nodeName)
+	klog.V(5).Infof("[V2] - InstanceID(%v)", nodeName)
 
 	node, err := i.client.GetNodeByName(string(nodeName))
 	if err != nil {
 		return "", err
 	}
 
-	klog.V(5).Infof("InstanceID(%v) Data:(%v)", string(nodeName), node)
+	klog.V(5).Infof("[V2] - InstanceID(%v) Data:(%v)", string(nodeName), node)
 	instanceID := "autok8s://" + fmt.Sprintf("%v", node.Name)
 
 	return instanceID, nil
@@ -121,14 +135,14 @@ func (i *instancesv2) InstanceID(ctx context.Context, nodeName types.NodeName) (
 
 // InstanceType returns the type of the specified instance.
 func (i *instancesv2) InstanceType(ctx context.Context, name types.NodeName) (string, error) {
-	klog.V(5).Infof("InstanceType(%v)", name)
+	klog.V(5).Infof("[V2] - InstanceType(%v)", name)
 
 	node, err := i.client.GetNodeByName(string(name))
 	if err != nil {
 		return "", err
 	}
 
-	klog.V(5).Infof("InstanceType(%v) Data:(%v)", string(name), node)
+	klog.V(5).Infof("[V2] - InstanceType(%v) Data:(%v)", string(name), node)
 	instanceType := node.Type
 
 	return instanceType, nil
@@ -136,7 +150,7 @@ func (i *instancesv2) InstanceType(ctx context.Context, name types.NodeName) (st
 
 // InstanceTypeByProviderID returns the type of the specified instance.
 func (i *instancesv2) InstanceTypeByProviderID(ctx context.Context, providerID string) (string, error) {
-	klog.V(5).Infof("InstanceTypeByProviderID(%v)", providerID)
+	klog.V(5).Infof("[V2] - InstanceTypeByProviderID(%v)", providerID)
 
 	name := strings.Split(providerID, "//")[1]
 	node, err := i.client.GetNodeByName(string(name))
@@ -159,7 +173,7 @@ func (i *instancesv2) AddSSHKeyToAllInstances(ctx context.Context, user string, 
 // CurrentNodeName returns the name of the node we are currently running on
 // On most clouds (e.g. GCE) this is the hostname, so we provide the hostname
 func (i *instancesv2) CurrentNodeName(ctx context.Context, hostname string) (types.NodeName, error) {
-	klog.V(5).Infof("CurrentNodeName(%v)", hostname)
+	klog.V(5).Infof("[V2] - CurrentNodeName(%v)", hostname)
 
 	node, err := i.client.GetNodeByName(string(hostname))
 	if err != nil {
@@ -173,20 +187,20 @@ func (i *instancesv2) CurrentNodeName(ctx context.Context, hostname string) (typ
 // If false is returned with no error, the instance will be immediately deleted by the cloud controller manager.
 // This method should still return true for instances that exist but are stopped/sleeping.
 func (i *instancesv2) InstanceExistsByProviderID(ctx context.Context, providerID string) (bool, error) {
-	klog.V(5).Infof("InstanceExistsByProviderID(%v)", providerID)
+	klog.V(5).Infof("[V2] - InstanceExistsByProviderID(%v)", providerID)
 
 	name := strings.Split(providerID, "//")[1]
 	node, err := i.client.GetNodeByName(string(name))
 	if err != nil {
 		return false, err
 	}
-	klog.V(5).Infof("InstanceExistsByProviderID(%v):exists", node)
+	klog.V(5).Infof("[V2] - InstanceExistsByProviderID(%v):exists", node)
 	return true, nil
 }
 
 // InstanceShutdownByProviderID returns true if the instance is shutdown in cloudprovider
 func (i *instancesv2) InstanceShutdownByProviderID(ctx context.Context, providerID string) (bool, error) {
-	klog.V(5).Infof("InstanceShutdownByProviderID(%v)", providerID)
+	klog.V(5).Infof("[V2] - InstanceShutdownByProviderID(%v)", providerID)
 
 	name := strings.Split(providerID, "//")[1]
 	_, err := i.client.GetNodeByName(string(name))

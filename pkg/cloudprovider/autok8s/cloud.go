@@ -16,6 +16,7 @@ const ProviderName = "autok8s"
 
 type autok8s struct {
 	providerName  string
+	instancesv2   cloudprovider.InstancesV2
 	instances     cloudprovider.Instances
 	zones         cloudprovider.Zones
 	loadbalancers cloudprovider.LoadBalancer
@@ -63,9 +64,9 @@ func newCloud(conf libvirtApiClient.Config) (cloudprovider.Interface, error) {
 
 	return &autok8s{
 		instances:     newInstances(cc),
+		instancesv2:   newInstancesV2(cc),
 		zones:         newZones(cc),
 		loadbalancers: newLoadBalancers(cc),
-		// instancesv2:   newInstancesV2(cc),
 	}, nil
 }
 
@@ -87,7 +88,7 @@ func (c *autok8s) Instances() (cloudprovider.Instances, bool) {
 // InstancesV2 is not implemented
 func (c *autok8s) InstancesV2() (cloudprovider.InstancesV2, bool) {
 	klog.V(5).Info("Instancesv2()")
-	return nil, true
+	return c.instancesv2, true
 }
 
 func (c *autok8s) Zones() (cloudprovider.Zones, bool) {

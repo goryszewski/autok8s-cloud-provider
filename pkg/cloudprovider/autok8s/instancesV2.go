@@ -25,7 +25,7 @@ func GetIP(node *libvirtApiClient.NodeV2) []v1.NodeAddress {
 		klog.V(5).Infof("[V2] - GetIP_NodeAddresses(%v) , value ip: (%#+v)", node.Name, value.Name)
 
 		nodeAddr := v1.NodeAddress{}
-		if value.Name == "public" {
+		if value.Source == "public" {
 			klog.V(5).Infof("[V2] - GetIP_NodeAddresses(%v) , External ip: (%v)", node.Name, value.Ip)
 
 			nodeAddr.Address = value.Ip

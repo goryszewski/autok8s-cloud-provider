@@ -15,7 +15,6 @@ import (
 const ProviderName = "autok8s"
 
 type autok8s struct {
-	providerName  string
 	instancesv2   cloudprovider.InstancesV2
 	instances     cloudprovider.Instances
 	zones         cloudprovider.Zones

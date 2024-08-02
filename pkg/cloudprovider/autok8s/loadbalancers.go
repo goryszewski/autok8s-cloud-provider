@@ -28,22 +28,27 @@ func prepServiceLoadBalancerPayload(service *v1.Service, nodes []*v1.Node) libvi
 		ports = append(ports, pre_port)
 	}
 
+	var label_tyle_lb v1.NodeAddressType = "ExternalIP"
+	if value, ok := service.Labels["type-loadbalancer"]; ok {
+		if value != "ExternalIP" {
+			label_tyle_lb = "InternalIP"
+		}
+	}
+
 	if nodes != nil {
 		for _, item := range nodes {
 			node := libvirtApiClient.Node{Name: item.Name}
 			for _, address := range item.Status.Addresses {
 
-				if address.Type == "InternalIP" {
-					node.Internal = address.Address
-				} else if address.Type == "ExternalIP" {
-					node.External = address.Address
+				if address.Type == label_tyle_lb {
+					node.IP = address.Address
 				}
 			}
 			_nodes = append(_nodes, node)
 
 		}
 	} else {
-		node := libvirtApiClient.Node{Name: "", External: "", Internal: ""}
+		node := libvirtApiClient.Node{Name: "", IP: ""}
 		_nodes = append(_nodes, node)
 	}
 

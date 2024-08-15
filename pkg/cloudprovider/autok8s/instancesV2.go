@@ -18,34 +18,7 @@ type instancesv2 struct {
 
 func GetIP(node *libvirtApiClient.NodeV2) []v1.NodeAddress {
 	klog.V(5).Infof("[V2] - GetIP_NodeAddresses(%v) , IP: (%#+v)", node.Name, node.Interface)
-
-	var addrs []v1.NodeAddress
-
-	for _, value := range node.Interface {
-		klog.V(5).Infof("[V2] - GetIP_NodeAddresses(%v) , value ip: (%#+v)", node.Name, value.Name)
-
-		nodeAddr := v1.NodeAddress{}
-		if value.Source == "public" {
-			klog.V(5).Infof("[V2] - GetIP_NodeAddresses(%v) , External ip: (%v)", node.Name, value.Ip)
-
-			nodeAddr.Address = value.Ip
-			nodeAddr.Type = v1.NodeExternalIP
-		} else {
-			klog.V(5).Infof("[V2] - GetIP_NodeAddresses(%v) , Internal ip: (%v)", node.Name, value.Ip)
-
-			nodeAddr.Address = value.Ip
-			nodeAddr.Type = v1.NodeInternalIP
-		}
-		addrs = append(addrs, nodeAddr)
-
-	}
-
-	nodeHostName := v1.NodeAddress{
-		Type:    v1.NodeHostName,
-		Address: fmt.Sprintf("%v", node.Name),
-	}
-
-	addrs = append(addrs, nodeHostName)
+	var addrs []v1.NodeAddress = prepAddress(node)
 	return addrs
 }
 

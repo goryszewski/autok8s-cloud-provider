@@ -140,7 +140,21 @@ func (i *instancesv2) InstanceTypeByProviderID(ctx context.Context, providerID s
 // expected format for the key is standard ssh-keygen format: <protocol> <blob>
 func (i *instancesv2) AddSSHKeyToAllInstances(ctx context.Context, user string, keyData []byte) error {
 	klog.V(5).Info("AddSSHKeyToAllInstances(%v, %v)", user, keyData)
-	return cloudprovider.NotImplemented
+
+	nodes, err := i.client.GetNodes()
+	if err != nil {
+		klog.Errorf("Failed to retrieve nodes: %v", err)
+		return err
+	}
+	for _, node := range *nodes {
+		err := i.client.addSSHKeyToInstance(node, user, keyData)
+		if err != nil {
+			klog.Errorf("Failed to add SSH key to instance %v: %v", node.Name, err)
+			return err
+		}
+	}
+	klog.Infof("Successfully added SSH key to all instances for user %v", user)
+	return nil
 }
 
 // CurrentNodeName returns the name of the node we are currently running on
